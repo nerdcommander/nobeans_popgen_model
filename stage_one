@@ -1,0 +1,37 @@
+import math
+class Hardy_Weinberg:
+    """This class takes no input but asks for various frequencies. If the frequencies
+    are not known, please type 0."""
+    def __init__(self,p=0,q=0,qq=0):
+        self.p = input("What is the frequency of the dominant allele? ")
+        self.q = input("What is the frequency of the recessive allele? ")
+        self.qq = input("What is the frequency of the recessive phenotype? ")
+        if self.qq != 0 and self.q == 0:
+            self.get_q_from_qq()
+        if self.p == 0:
+            self.get_p()
+        if self.qq == 0 and self.q == 0:
+            self.get_q()
+        
+    def get_p(self):
+        self.p = 1 - self.q
+        return self.p
+        
+    def get_q(self):
+        self.q = 1 - self.p
+        return self.q
+        
+    def get_q_from_qq(self):
+        self.q = math.sqrt(self.qq)
+        return self.q
+        
+    def get_heterozygotes(self):
+        hetero = 1 - self.p**2 - self.q**2
+        return hetero
+        
+if __name__=='__main__':
+    test = Hardy_Weinberg()
+    print test.p
+    print test.q
+    #print test.get_q_from_qq()
+    print test.get_heterozygotes()

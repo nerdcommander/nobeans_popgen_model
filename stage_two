@@ -1,0 +1,97 @@
+import math
+class Hardy_Weinberg:
+    """This class takes no input but asks for various frequencies and numbers. 
+    If the frequencies are not known, please type 0."""
+    def __init__(self,p=0,q=0,qq=0,size=0,generations=0):
+        self.p = input("What is the frequency of the dominant allele? ")
+        self.q = input("What is the frequency of the recessive allele? ")
+        self.qq = input("What is the frequency of the recessive phenotype? ")
+        self.size = input("What is the size of your population? ")
+        self.generations = input("How many generations do you want to run this for? ")
+        if self.qq != 0 and self.q == 0:
+            self.get_q_from_qq()
+        if self.p == 0:
+            self.get_p()
+        if self.qq == 0 and self.q == 0:
+            self.get_q()
+        
+    def get_p(self):
+        """Returns the frequency of the dominant allele given the frequency
+        of the recessive allele."""
+        self.p = 1 - self.q
+        return self.p
+        
+    def get_q(self):
+        """Returns the frequency of the recessive allele given the frequency
+        of the dominant allele."""
+        self.q = 1 - self.p
+        return self.q
+        
+    def get_q_from_qq(self):
+        """Returns the frequency of the recessive allele given the number of
+        recessive phenotypes."""
+        self.q = math.sqrt(self.qq)
+        return self.q
+        
+    def get_heterozygotes(self):
+        """Returns the probability of a heterozygous individual."""
+        hetero = 1 - self.p**2 - self.q**2
+        return hetero
+    
+    def get_pp(self):
+        """Return the probability of a homozygous dominant."""
+        pp = self.p**2
+        return pp
+        
+    def get_qq(self):
+        """Returns the probability of a homozygous recessive."""
+        self.qq = self.q**2
+        return self.qq
+        
+    def get_phenotype(self):
+        """Returns the predicted number of individuals with various phenotypes
+        given the allele frequencies."""
+        reply = raw_input("Is the dominant phenotype the same as the heterozygous phenotype? ")
+        if reply == "yes" or reply == "Yes":
+            print "There are ", self.size*(self.get_pp() + self.get_heterozygotes()) ,"individuals predicted to have the dominant phenotype."
+            print "There are ", self.size*(self.get_qq()) ,"individuals predicted to have the recessive phenotype."
+        else:
+            print "There are ", self.size*self.get_pp() ,"individuals predicted to have the dominant phenotype."
+            print "There are ",  self.size*self.get_heterozygotes() ,"individuals predicted to have the heterozygous phenotype."
+            print "There are ", self.size*self.get_qq() ,"individuals predicted to have the recessive phenotype."
+
+class equilibrium:
+    """This class takes no input but asks for various numbers. If the information
+    is not known, please press zero."""
+    def __init__(self, sample = 0, dominant = 0, recessive = 0, hetero = 0):
+        self.sample = input("What is the size of your sample? ")
+        self.dominant = input("How many individuals with the dominant genotype do you have? ")
+        self.recessive = input("How many individuals with the recessive genotype do you have? ")
+        self.hetero = input("How many individuals with the heterozygous genotype do you have? ")
+        self.p = (2*float(self.dominant)+self.hetero)/(2*self.sample)
+        self.q = (2*float(self.recessive)+self.hetero)/(2*self.sample)
+        self.expected = self.get_expected()
+        
+    def get_expected(self):
+        """This function returns the expected number of individuals with various
+        genotypes given the allele frequencies."""
+        self.expected = []
+        self.expected.append(self.p**2 * self.sample)
+        self.expected.append(self.q**2 * self.sample)
+        self.expected.append(2*self.p*self.q *self.sample)
+        return self.expected
+        
+    def get_chi_square(self):
+        """This function calculates the chi square test statistic and compares it to the critical
+        values at alpha 0.05 and 0.01 for one degrees of freedom."""
+        chi_square = (((self.dominant - self.expected[0])**2)/self.expected[0]) + (((self.recessive - self.expected[1])**2)/self.expected[1]) + (((self.hetero - self.expected[2])**2)/self.expected[2])
+        p = "The data is not significantly different from expected at an alpha of 0.05 and 0.01."
+        if chi_square > 3.84:
+            p = "The data is significantly different from expected at an alpha of 0.05."
+        if chi_square > 6.64:
+            p = "The data is significantly different from expected at an alpha of 0.01."
+        #print chi_square
+        return p        
+  
+if __name__=='__main__':
+  test = Hardy_Weinberg()

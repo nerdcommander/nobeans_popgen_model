@@ -87,8 +87,14 @@ class Hardy_Weinberg:
       frequencies at the specified generation, or the generation at which one
       allele is lost."""
       survival_pp = input("What is the rate of survival of a homozygous dominant individual? ")
+      if survival_pp > 1 or survival_pp < 0:
+            survival_pp = input("Please select a number between 0 and 1.")
       survival_pq = input("What is the rate of survival of a heterozygous individual? ")
+      if survival_pq > 1 or survival_pq < 0:
+            survival_pq = input("Please select a number between 0 and 1.")
       survival_qq = input("What is the rate of survival of a homozygous recessive individual? ")
+      if survival_qq > 1 or survival_qq < 0:
+            survival_qq = input("Please select a number between 0 and 1.")
       p = self.p
       q = self.q
       size = self.size

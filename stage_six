@@ -1,0 +1,542 @@
+
+import math
+import random
+import numpy
+import matplotlib.pyplot as plt
+class Hardy_Weinberg:
+    """This class takes no input but asks for various frequencies and numbers. 
+    If the frequencies are not known, please type 0."""
+    def __init__(self,p=0,q=0,qq=0,size=0,generations=0):
+        print "This class asks for the frequency of alleles or genotypes. You must know the frequency of the dominant or recessive allele or genotype to run this class."
+        reply = raw_input("Do you know the frequency of the dominant allele? ")
+        if reply == "yes" or reply == "Yes" or reply == "y":
+            self.p = input("What is the frequency of the dominant allele? ")
+            if self.p > 1 or self.p < 0:
+                self.p = input("The frequency of the dominant allele must be between 0 and 1. Enter it again. ")
+            self.q = self.get_q()
+        else:
+            reply_2 = raw_input("Do you know the frequency of the recessive allele? ")
+            if reply_2 == "yes" or reply_2 == "Yes" or reply_2 == "y":
+                self.q = input("What is the frequency of the recessive allele? ")
+                if self.q > 1 or self.q < 0:
+                    self.q = input("The frequency of the recessive allele must be between 0 and 1. Enter it again. ")
+                self.p = self.get_p()
+            else:
+                reply_3 = raw_input("Do you know the frequency of the recessive phenotype? ")
+                if reply_3 == "yes" or reply_3 == "Yes" or reply_3 == "y":
+                    self.qq = input("What is the frequency of the recessive phenotype? ")
+                    if self.qq > 1 or self.qq < 0:
+                        self.qq = input("The frequency of the recessive phenotype must be between 0 and 1. Enter it again. ")
+                    self.q = self.get_q_from_qq()
+                    self.p = self.get_p()
+                else:
+                    reply_4 = raw_input("Do you know the frequency of the dominant genotype? ")
+                    if reply_4 == "yes" or reply_4 == "Yes" or reply_4 == "y":
+                        self.pp = input("What is the frequency of the dominant genotype? ")
+                        if self.pp > 1 or self.pp < 0:
+                            self.pp = input("The frequency of the dominant genotype must be between 0 and 1. Enter it again. ")
+                        self.p = math.sqrt(self.pp)
+                        self.q = self.get_q()
+        self.size = input("What is the size of your population? ")
+        if self.size > 10000:
+            self.size = input("That number is too large for some of the calculations. Please input a population size between 1-10000. ")
+        if self.size < 0 or self.size == 0:
+            self.size = input("The size must be greater than zero. ")
+        response = input("Whould you like to calculate phenotype (1), genetic drift (2), natural selection (3), migration (4), or run a simulation based on individuals (5), alleles (6), or reproduction (7), or all three (8)? ")
+        if response == 1:
+            self.get_phenotype()
+        if response == 2:
+            self.genetic_drift()
+        if response == 3:
+            self.generations = input("How many generations do you want to run this for? ")
+            self.natural_selection()
+        if response == 4:
+            self.generations = input("How many generations do you want to run this for? ")
+            self.migration()
+        if response == 5:
+            self.generations = input("How many generations do you want to run this for? ")
+            self.next_gen_individual()
+        if response == 6:
+            self.generations = input("How many generations do you want to run this for? ")
+            self.next_gen_allele()
+        if response == 7:
+            self.generations = input("How many generations do you want to run this for? ")
+            self.brood_size = input("What is the average brood size for this species? ")
+            if self.generations%self.brood_size != 0:
+                self.brood_size = input("Pick a brood size that is a factor of your population size. ")
+            self.next_gen_repro()
+        if response == 8:
+            self.generations = input("How many generations do you want to run this for? ")
+            self.brood_size = input("What is the average brood size for this species? ")
+            if self.generations%self.brood_size != 0:
+                self.brood_size = input("Pick a brood size that is a factor of your population size. ")
+            self.compare()
+        self.last_individ = 0
+        self.last_allele = 0
+        self.last_repro = 0
+        
+        
+    def get_p(self):
+        """Returns the frequency of the dominant allele given the frequency
+        of the recessive allele."""
+        self.p = 1 - self.q
+        return self.p
+        
+    def get_q(self):
+        """Returns the frequency of the recessive allele given the frequency
+        of the dominant allele."""
+        self.q = 1 - self.p
+        return self.q
+        
+    def get_q_from_qq(self):
+        """Returns the frequency of the recessive allele given the number of
+        recessive phenotypes."""
+        self.q = math.sqrt(self.qq)
+        return self.q
+        
+    def get_heterozygotes(self):
+        """Returns the probability of a heterozygous individual."""
+        hetero = 1 - self.p**2 - self.q**2
+        return hetero
+    
+    def get_pp(self):
+        """Return the probability of a homozygous dominant."""
+        pp = self.p**2
+        return pp
+        
+    def get_qq(self):
+        """Returns the probability of a homozygous recessive."""
+        self.qq = self.q**2
+        return self.qq
+        
+    def get_phenotype(self):
+        """Returns the predicted number of individuals with various phenotypes
+        given the allele frequencies."""
+        reply = raw_input("Is the dominant phenotype the same as the heterozygous phenotype? ")
+        if reply == "yes" or reply == "Yes":
+            print "There are ", self.size*(self.get_pp() + self.get_heterozygotes()) ,"individuals predicted to have the dominant phenotype."
+            print "There are ", self.size*(self.get_qq()) ,"individuals predicted to have the recessive phenotype."
+        else:
+            print "There are ", self.size*self.get_pp() ,"individuals predicted to have the dominant phenotype."
+            print "There are ",  self.size*self.get_heterozygotes() ,"individuals predicted to have the heterozygous phenotype."
+            print "There are ", self.size*self.get_qq() ,"individuals predicted to have the recessive phenotype."
+        
+    def drift(self):
+        """Returns the new proportion of heterozygotes given genetic drift. Based on
+        population size and number of generations the simulation runs for."""
+        decline = float(self.get_heterozygotes()) - (self.generations*(1/float((2*self.size))))
+        if decline < 0:
+            return 0
+        else:
+            print "The new proportion of heterozygotes is ", decline
+            return decline
+            
+    def genetic_drift(self):
+        """Returns the difference between the expected population proportions given Hardy-Weinberg
+        equilibrium and the actual proportions."""
+        survivors = input("How many survivors remain from the original population? ")
+        if survivors > self.size:
+            survivors = input("The number of survivors must be less than or equal to the size of the original population.")
+        original = []
+        for i in range(self.size):
+            for j in range(int(self.get_pp()*self.size)):
+                original.append(0)
+            for k in range(int(self.get_heterozygotes()*self.size)):
+                original.append(1)
+            for m in range(int(self.get_qq()*self.size)):
+                original.append(2)
+        new_pop = []
+        for i in range(survivors):
+            random_org = int(self.size*random.random())
+            new_pop.append(original[random_org])
+        #print new_pop
+        new_p = (2*new_pop.count(0) + new_pop.count(1))/float(2*survivors)
+        new_q = (2*new_pop.count(2) + new_pop.count(1))/float(2*survivors)
+        new_pp = new_pop.count(0)
+        new_qq = new_pop.count(2)
+        new_pq = new_pop.count(1)
+        #difference_p = self.p - new_p
+        print "The new allele frequencies are dominant: ",new_p,"and recessive:",new_q
+        print "The new genotypes are homozygous dominant: ",new_pp, "heterozygous: ",new_pq, "and homozygous recessive: ",new_qq
+        print "The difference between the old and new dominant allele frequency is ", self.p - new_p
+        reply = raw_input("Would you like to use these new allele frequencies in future calculations? ")
+        if reply == "yes" or reply == "y" or reply == "Yes":
+            self.p = new_p
+            self.q = new_q
+        
+            
+    def allele_fixation_time(self):
+        """Returns the number of generations required for one allele to become
+        fixed in the population."""
+        time = -4*self.size*(self.p*math.log10(self.p) + (1-self.p)*math.log10(1-self.p))
+        return time
+        
+    def natural_selection(self):
+        """Asks for the rate of survivial for the genotypes and returns the allele
+        frequencies at the specified generation, or the generation at which one
+        allele is lost. Also returns the dominant allele frequency over generations."""
+        survival_pp = input("What is the rate of survival of a homozygous dominant individual? ")
+        if survival_pp > 1 or survival_pp < 0:
+            survival_pp = input("Please select a number between 0 and 1.")
+        survival_pq = input("What is the rate of survival of a heterozygous individual? ")
+        if survival_pq > 1 or survival_pq < 0:
+            survival_pq = input("Please select a number between 0 and 1.")
+        survival_qq = input("What is the rate of survival of a homozygous recessive individual? ")
+        if survival_qq > 1 or survival_qq < 0:
+            survival_qq = input("Please select a number between 0 and 1.")
+        p = self.p
+        q = self.q
+        record = []
+        record.append(p)
+        size = self.size
+        for i in range(self.generations):
+            num_pp = (p**2)*float(size)*survival_pp
+            num_pq = (2*p*q)*float(size)*survival_pq
+            num_qq = (q**2)*float(size)*survival_qq
+            gametes = 2*num_pp + 2*num_pq + 2*num_qq
+            p = (2*num_pp + num_pq)/float(gametes)
+            q = 1 - p
+            record.append(p)
+            size = num_pp + num_pq + num_qq
+            if p < 0.001:
+                print "The dominant allele has been lost at generation ", i
+                print record
+                return record
+            if q < 0.001:
+                print "The recessive allele has been lost at generation ", i
+                print record
+                return record
+        print "The new frequency for the dominant allele is ", p
+        print "The new frequency for the recessive allele is ", q
+        print "The difference between the old and new dominant allele frequency is ", self.p - p
+        reply = raw_input("Would you like to use these new frequencies for future calculations? ")
+        if reply == "yes" or reply == "y" or reply == "Yes":
+            self.p = p
+            self.q = q
+        print record
+        plt.plot(range(self.generations + 1),record)
+        plt.ylabel("Dominant allele frequency")
+        plt.xlabel("Generations")
+        plt.show()
+    
+    
+    def migration(self):
+        """Returns the new allele frequencies if immigration occurs and the immigrants
+        have different allele frequencies."""
+        p_other = input("What is the frequency of the dominant allele in the immigrants? ")
+        m = input("What is the coefficient of migration? ")
+        p = self.p
+        delta_p = m*(p_other - p)
+        for i in range(self.generations):
+            p = p + delta_p
+            if p >= 1:
+                print "The dominant allele has become fixed in the population at generation ",  i+1
+                return
+            if p <= 0:
+                print "The recessive allele has become fixed in the population at generation ", i +1
+                return
+        print "The new frequency of the dominant allele is ", p
+        print "The new frequency of the recessive allele is ", 1-p
+        
+        
+    """def mutation(self):
+        mut_rate = input("What is the rate of mutation for this population? ")
+        p = self.p
+        q = self.q
+        for i in range(self.generations):"""
+        
+    def next_gen_individual(self):
+        """Returns the predicted dominant allele frequency for a given number of generations.
+        Assumes population size stays constant."""
+        pp = self.p**2
+        qq = self.q**2
+        pq = 2*self.p*self.q
+        record = []
+        record.append(self.p)
+        former_pop = []
+        for i in range(int(pp*self.size + 1)):
+            former_pop.append(0)
+        for i in range(int(pq*self.size + 1)):
+            former_pop.append(1)
+        for i in range(int(qq*self.size + 1)):
+            former_pop.append(2)
+        for i in range(self.generations):
+            #print "former", former_pop
+            new_pop = []
+            for i in range(self.size):
+                random_org = int(self.size *random.random())
+               #print random_org
+                new_pop.append(former_pop[random_org])
+                #print former_pop[random_org]
+            p = (2*new_pop.count(0) + new_pop.count(1))/float(2*self.size)
+            #print "new", new_pop
+            pp = p**2
+            q = 1 - p
+            qq = q**2
+            pq = 2*p*q
+            record.append(p)
+            former_pop = new_pop
+        self.last_individ = record[self.generations]
+        #print record
+        plt.plot(range(self.generations + 1),record)
+        plt.ylabel("Dominant allele frequency")
+        plt.xlabel("Generations")
+        #plt.show()
+        return record
+        
+    def next_gen_allele(self):
+        """This function calculates the next generation based on alleles, rather than
+        individuals, moving from generation to generation."""
+        pp = self.p**2
+        qq = self.q**2
+        pq = 2*self.p*self.q
+        a_1 = 0
+        a_2 = 0
+        record = []
+        record.append(self.p)
+        former_pop = []
+        for i in range(self.generations):
+            for i in range(int(pp*self.size + 1)):
+                former_pop.append(0)
+            for i in range(int(pq*self.size + 1)):
+                former_pop.append(1)
+            for i in range(int(qq*self.size + 1)):
+                former_pop.append(2)
+            #print "former", former_pop
+            new_pop = []
+            for i in range(self.size):
+                r_one = int(self.size *random.random())
+                r_two = int(self.size *random.random())
+                if former_pop[r_one] == 0:
+                    a_1 = 0
+                if former_pop[r_one] == 2:
+                    a_1 = 2
+                if former_pop[r_one] == 1:
+                    if int(random.random()*10)%2 == 0:
+                        a_1 = 0
+                    else:
+                        a_1 = 2
+                if former_pop[r_two] == 0:
+                    a_2 = 0
+                if former_pop[r_two] == 2:
+                    a_2 = 2
+                if former_pop[r_two] == 1:
+                    if int(random.random()*10)%2 == 0:
+                        a_2 = 0
+                    else:
+                        a_2 = 2
+                if a_1 == 0 and a_2 == 0:
+                    new_pop.append(0)
+                if a_1 == 0 and a_2 == 2 or a_1 == 2 and a_2 == 0:
+                    new_pop.append(1)
+                if a_1 == 2 and a_2 == 2:
+                    new_pop.append(2)
+                #print former_pop[random_org]
+            p = (2*new_pop.count(0) + new_pop.count(1))/float(2*self.size)
+            #print "new", new_pop
+            pp = p**2
+            q = 1 - p
+            qq = q**2
+            pq = 2*p*q
+            record.append(p)
+            former_pop = new_pop
+        self.last_allele = record[self.generations]
+        #print record
+        plt.plot(range(self.generations + 1),record)
+        plt.ylabel("Dominant allele frequency")
+        plt.xlabel("Generations")
+        #plt.show()
+        return record
+        
+         
+    def next_gen_repro(self):
+        """This function calculates the next generation based on mating and brood size. One
+        allele from each parent, punnet square for brood size."""
+        pp = self.p**2
+        qq = self.q**2
+        pq = 2*self.p*self.q
+        record = []
+        record.append(self.p)
+        former_pop = []
+        for i in range(self.generations):
+            for i in range(int(pp*self.size + 1)):
+                former_pop.append(0)
+            for i in range(int(pq*self.size + 1)):
+                former_pop.append(1)
+            for i in range(int(qq*self.size + 1)):
+                former_pop.append(2)
+            #print "former", former_pop
+            new_pop = []
+            for i in range(self.size/self.brood_size):
+                r_one = former_pop[int(self.size *random.random())]
+                r_two = former_pop[int(self.size *random.random())]
+                if r_one == 0:
+                    a_11 = 0
+                    a_12 = 0
+                if r_one == 2:
+                    a_11 = 2
+                    a_12 = 2
+                if r_one == 1:
+                    a_11 = 0
+                    a_12 = 2
+                if r_two == 0:
+                    a_21 = 0
+                    a_22 = 0
+                if r_two == 2:
+                    a_21 = 2
+                    a_22 = 2
+                if r_two == 1:
+                    a_21 = 0
+                    a_22 = 2
+                for i in range(self.brood_size):
+                    new_org = 0
+                    if int(random.random()*10)%2 ==0:
+                        new_org = a_11
+                    else:
+                        new_org = a_12
+                    if int(random.random()*10)%2 ==0:
+                        new_org = new_org + a_21
+                    else:
+                        new_org = new_org + a_22
+                    if new_org == 0:
+                        new_pop.append(0)
+                    if new_org == 2:
+                        new_pop.append(1)
+                    if new_org == 4:
+                        new_pop.append(2) 
+                #print former_pop[random_org]
+            p = (2*new_pop.count(0) + new_pop.count(1))/float(2*self.size)
+            #print "new", new_pop
+            pp = p**2
+            q = 1 - p
+            qq = q**2
+            pq = 2*p*q
+            record.append(p)
+            former_pop = new_pop
+        self.last_repro = record[self.generations]
+        #print record
+        plt.plot(range(self.generations + 1),record)
+        plt.ylabel("Dominant allele frequency")
+        plt.xlabel("Generations")
+        #plt.show()
+        return record
+        
+    def compare(self):
+        """Runs and creates an overlapping graphs for the three different 
+        simulation functions."""
+        comp_1 = []
+        comp_12 = []
+        comp_2 = []
+        comp_22 = []
+        comp_3 = []
+        comp_32 = []
+        last_i = []
+        last_a = []
+        last_r = []
+        leng = input("How long do you want to run the simulations? ")
+        for i in range(leng):
+            #print "The individual simulation gives: "
+            record_1 = self.next_gen_individual()
+            #print "The allele simulation gives: "
+            record_2 = self.next_gen_allele()
+            #print "The reproduction simulation gives: "
+            record_3 = self.next_gen_repro()
+            mean_1 = sum(record_1)/len(record_1)
+            mean_2 = sum(record_2)/len(record_2)
+            mean_3 = sum(record_3)/len(record_3)
+            std_1 = numpy.std(record_1)
+            std_2 = numpy.std(record_2)
+            std_3 = numpy.std(record_3)
+            #print "The mean of the individual simulation is ", mean_1, "with standard deviation ", std_1
+            #print "The mean of the allele simulation is ", mean_2, "with standard deviation ", std_2
+            #print "The mean of the reproduction simulation is ", mean_3, "with standard deviation ", std_3
+            comp_1.append(mean_1)
+            comp_2.append(mean_2)
+            comp_3.append(mean_3)
+            comp_12.append(std_1)
+            comp_22.append(std_2)
+            comp_32.append(std_3)
+            last_i.append(self.last_individ)
+            last_a.append(self.last_allele)
+            last_r.append(self.last_repro)
+        """Collect mean and std of list of means. And do same for list of stds"""
+        """Grab last data point for each simulation and do same. Compare with mean."""
+        print "The mean of the means of the individual is ", sum(comp_1)/len(comp_1)
+        print "The std of the means of the individual is ", numpy.std(comp_1)
+        print "The mean of the means of the alleles is ", sum(comp_2)/len(comp_2)
+        print "The std of the means of the alleles is ", numpy.std(comp_2)
+        print "The mean of the means of the reproduction is ", sum(comp_3)/len(comp_3)
+        print "The std of the means of the reproduction is ", numpy.std(comp_3)
+        print
+        print "The mean of the stds of the individual is ", sum(comp_12)/len(comp_12)
+        print "The std of the stds of the individual is ", numpy.std(comp_12)
+        print "The mean of the stds of the alleles is ", sum(comp_22)/len(comp_22)
+        print "The std of the stds of the alleles is ", numpy.std(comp_22)
+        print "The mean of the stds of the reproduction is ", sum(comp_32)/len(comp_32)
+        print "The std of the stds of the reproduction is ", numpy.std(comp_32)
+        print
+        print "The mean of the last individuals is ", sum(last_i)/len(last_i)
+        print "The standard deviation of the last individuals is ", numpy.std(last_i)
+        print "The mean of the last alleles is ", sum(last_a)/len(last_a)
+        print "The standard deviation of the last alleles is ", numpy.std(last_a)
+        print "The mean of the last reproduction is ", sum(last_r)/len(last_r)
+        print "The standard deviation of the last reproduction is ", numpy.std(last_r)
+        #plt.plot(range(self.generations),comp_1)
+        #plt.plot(range(self.generations),comp_2)
+        #plt.plot(range(self.generations),comp_3)
+        #plt.plot(record_1)
+        #plt.plot(record_2)
+        #plt.plot(record_3)
+        #plt.show()
+        
+        
+        
+class equilibrium:
+    """This class takes no input but asks for various numbers. If the information
+    is not known, please press zero."""
+    def __init__(self, sample = 0, dominant = 0, recessive = 0, hetero = 0):
+        self.sample = input("What is the size of your sample? ")
+        self.dominant = input("How many individuals with the dominant genotype do you have? ")
+        self.recessive = input("How many individuals with the recessive genotype do you have? ")
+        self.hetero = input("How many individuals with the heterozygous genotype do you have? ")
+        self.p = (2*float(self.dominant)+self.hetero)/(2*self.sample)
+        self.q = (2*float(self.recessive)+self.hetero)/(2*self.sample)
+        self.expected = self.get_expected()
+        
+    def get_expected(self):
+        """This function returns the expected number of individuals with various
+        genotypes given the allele frequencies."""
+        self.expected = []
+        self.expected.append(self.p**2 * self.sample)
+        self.expected.append(self.q**2 * self.sample)
+        self.expected.append(2*self.p*self.q *self.sample)
+        return self.expected
+        
+    def get_chi_square(self):
+        """This function calculates the chi square test statistic and compares it to the critical
+        values at alpha 0.05 and 0.01 for one degrees of freedom."""
+        chi_square = (((self.dominant - self.expected[0])**2)/self.expected[0]) + (((self.recessive - self.expected[1])**2)/self.expected[1]) + (((self.hetero - self.expected[2])**2)/self.expected[2])
+        p = "The data is not significantly different from expected at an alpha of 0.05 and 0.01."
+        if chi_square > 3.84:
+            p = "The data is significantly different from expected at an alpha of 0.05."
+        if chi_square > 6.64:
+            p = "The data is significantly different from expected at an alpha of 0.01."
+        #print chi_square
+        return p        
+
+
+
+test = Hardy_Weinberg()
+
+"""if __name__=='__main__':
+    test = Hardy_Weinberg()
+    #print test.p
+    #print test.q
+    #print test.get_q_from_qq()
+    #print test.get_heterozygotes()
+    #test.natural_selection()
+    #test.next_gen_allele()
+    test.next_gen_repro()
+    #test.genetic_drift()"""
+    
+
